@@ -5,12 +5,13 @@ import androidx.paging.PagingState
 import com.abhay.crypto.data.mapper.CoinMapper
 import com.abhay.crypto.data.remote.BinanceApi
 import com.abhay.crypto.domain.model.Coin
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class CoinPagingSource(
     private val api: BinanceApi,
+    private val restPriceCache: MutableStateFlow<Map<String, Double>>,
 ) : PagingSource<Int, Coin>() {
 
-    // Cached for the lifetime of this source instance — one network call per load cycle.
     private var coins: List<Coin>? = null
 
     override fun getRefreshKey(state: PagingState<Int, Coin>): Int? {
@@ -25,7 +26,10 @@ class CoinPagingSource(
             val allCoins = coins ?: api.getTickerPrices()
                 .filter { it.symbol.endsWith("USDT") }
                 .map { CoinMapper.toDomain(it) }
-                .also { coins = it }
+                .also { list ->
+                    coins = list
+                    restPriceCache.value = list.associate { it.symbol to it.price }
+                }
 
             val start = params.key ?: 0
             val end = (start + params.loadSize).coerceAtMost(allCoins.size)

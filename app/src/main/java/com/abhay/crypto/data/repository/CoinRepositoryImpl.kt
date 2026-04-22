@@ -10,6 +10,8 @@ import com.abhay.crypto.domain.model.Coin
 import com.abhay.crypto.domain.repository.CoinRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
@@ -21,6 +23,10 @@ class CoinRepositoryImpl @Inject constructor(
     private val webSocketService: BinanceWebSocketService,
 ) : CoinRepository {
 
+    // Populated by CoinPagingSource on first load. Acts as a fallback so every coin
+    // has a price before the WebSocket sends its first tick.
+    private val restPriceCache = MutableStateFlow<Map<String, Double>>(emptyMap())
+
     override fun getPagedCoins(): Flow<PagingData<Coin>> =
         Pager(
             config = PagingConfig(
@@ -28,9 +34,12 @@ class CoinRepositoryImpl @Inject constructor(
                 prefetchDistance = PREFETCH_DISTANCE,
                 enablePlaceholders = false,
             ),
-            pagingSourceFactory = { CoinPagingSource(api) },
+            pagingSourceFactory = { CoinPagingSource(api, restPriceCache) },
         ).flow.flowOn(Dispatchers.IO)
 
     override fun observeLivePrices(): Flow<Map<String, Double>> =
-        webSocketService.observePrices()
+        // REST prices are the baseline; WebSocket values override them as they arrive.
+        combine(restPriceCache, webSocketService.observePrices()) { rest, live ->
+            rest + live
+        }
 }

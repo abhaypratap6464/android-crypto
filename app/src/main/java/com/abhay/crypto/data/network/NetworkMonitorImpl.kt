@@ -29,7 +29,8 @@ class NetworkMonitorImpl @Inject constructor(
             }
 
             override fun onLost(network: Network) {
-                trySend(false)
+                val stillConnected = connectivityManager.activeNetwork != null
+                trySend(stillConnected)
             }
 
             override fun onUnavailable() {
@@ -43,12 +44,12 @@ class NetworkMonitorImpl @Inject constructor(
 
         connectivityManager.registerNetworkCallback(request, callback)
 
-        // Emit current state immediately so collectors don't wait for a change.
+        // Emit current state immediately — don't require VALIDATED because that flag
+        // is set by Android's captive-portal check and can be absent on valid connections.
         val activeNetwork = connectivityManager.activeNetwork
-        val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-        val hasConnection = capabilities != null &&
-                (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                        capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+        val hasConnection = connectivityManager
+            .getNetworkCapabilities(activeNetwork)
+            ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
         trySend(hasConnection)
 
         awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
