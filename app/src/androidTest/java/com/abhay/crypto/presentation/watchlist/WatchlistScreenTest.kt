@@ -22,7 +22,6 @@ class WatchlistScreenTest {
         val uiState = WatchlistUiState(
             isNetworkAvailable = true,
             folders = emptyList(),
-            watchListed = emptySet()
         )
 
         composeTestRule.setContent {
@@ -53,7 +52,6 @@ class WatchlistScreenTest {
         val uiState = WatchlistUiState(
             isNetworkAvailable = false,
             folders = emptyList(),
-            watchListed = emptySet()
         )
 
         composeTestRule.setContent {
