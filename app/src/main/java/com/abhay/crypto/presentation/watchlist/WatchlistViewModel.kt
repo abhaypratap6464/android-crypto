@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+
 @HiltViewModel
 class WatchlistViewModel @Inject constructor(
     getPagedCoins: GetPagedCoinsUseCase,
@@ -46,7 +48,7 @@ class WatchlistViewModel @Inject constructor(
 
     val livePrices: StateFlow<Map<String, Double>> = observeLivePrices().stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
         initialValue = emptyMap(),
     )
 
@@ -63,7 +65,7 @@ class WatchlistViewModel @Inject constructor(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
         initialValue = WatchlistUiState(),
     )
 

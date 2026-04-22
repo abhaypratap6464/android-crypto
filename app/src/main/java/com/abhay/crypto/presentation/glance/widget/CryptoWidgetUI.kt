@@ -27,6 +27,8 @@ import com.abhay.crypto.MainActivity
 import com.abhay.crypto.R
 import com.abhay.crypto.domain.model.Coin
 
+private const val MAX_WIDGET_COINS = 5
+
 @Composable
 fun CryptoWidgetContent(
     folderName: String,
@@ -85,7 +87,7 @@ fun CryptoWidgetContent(
                 )
             } else {
                 Column(modifier = GlanceModifier.fillMaxWidth()) {
-                    coins.take(5).forEach { coin ->
+                    coins.take(MAX_WIDGET_COINS).forEach { coin ->
                         Row(
                             modifier = GlanceModifier
                                 .fillMaxWidth()

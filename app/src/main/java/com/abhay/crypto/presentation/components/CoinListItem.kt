@@ -22,9 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.abhay.crypto.domain.model.Coin
 
+@Suppress("MagicNumber")
 private val CardBackground = Color(0xFFF5F3FA)
+
+@Suppress("MagicNumber")
 private val IconInactive = Color(0xFF9E9E9E)
-private val IconActive = Color(0xFFE91E63)
 
 @Composable
 fun CoinListItem(

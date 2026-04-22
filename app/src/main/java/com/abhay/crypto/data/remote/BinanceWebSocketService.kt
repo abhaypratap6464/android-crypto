@@ -24,6 +24,11 @@ class BinanceWebSocketService @Inject constructor(
 ) {
     private val streamUrl = "wss://stream.binance.com:9443/ws/!miniTicker@arr"
 
+    companion object {
+        private const val NORMAL_CLOSURE_STATUS = 1000
+        private const val RETRY_DELAY_MS = 5_000L
+    }
+
     fun observePrices(): Flow<Map<String, Double>> = callbackFlow {
         val producer = this
         val request = Request.Builder().url(streamUrl).build()
@@ -49,8 +54,8 @@ class BinanceWebSocketService @Inject constructor(
         }
 
         val webSocket = okHttpClient.newWebSocket(request, listener)
-        awaitClose { webSocket.close(1000, null) }
+        awaitClose { webSocket.close(NORMAL_CLOSURE_STATUS, null) }
     }
-        .retry { delay(5_000L); true }
+        .retry { delay(RETRY_DELAY_MS); true }
         .flowOn(Dispatchers.IO)
 }

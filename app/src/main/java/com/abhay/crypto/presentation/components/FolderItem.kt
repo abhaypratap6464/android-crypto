@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddToHomeScreen
+import androidx.compose.material.icons.automirrored.filled.AddToHomeScreen
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
@@ -36,7 +36,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.abhay.crypto.domain.model.BookmarkFolder
 
+@Suppress("MagicNumber")
 private val FolderCardBackground = Color(0xFFEDE7F6)
+
+@Suppress("MagicNumber")
+private val SubtitleGray = Color(0xFF757575)
 
 @Composable
 fun FolderItem(
@@ -72,7 +76,7 @@ fun FolderItem(
                     Text(
                         text = "${folder.coinIds.size} coins",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF757575),
+                        color = SubtitleGray,
                     )
 
                     IconButton(onClick = { menuExpanded = true }) {
@@ -116,7 +120,10 @@ fun FolderItem(
                         DropdownMenuItem(
                             text = { Text("Add to home screen") },
                             leadingIcon = {
-                                Icon(Icons.Default.AddToHomeScreen, contentDescription = null)
+                                Icon(
+                                    Icons.AutoMirrored.Filled.AddToHomeScreen,
+                                    contentDescription = null
+                                )
                             },
                             onClick = {
                                 menuExpanded = false

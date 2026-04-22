@@ -3,6 +3,7 @@ package com.abhay.crypto.presentation.watchlist
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -52,7 +53,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
 import com.abhay.crypto.R
-import com.abhay.crypto.domain.model.BookmarkFolder
 import com.abhay.crypto.domain.model.Coin
 import com.abhay.crypto.presentation.components.AddToFolderBottomSheet
 import com.abhay.crypto.presentation.components.CoinListItem
@@ -66,6 +66,7 @@ import com.abhay.crypto.presentation.components.RenameFolderDialog
 import com.abhay.crypto.presentation.glance.widget.CryptoWidgetReceiver
 import com.abhay.crypto.presentation.glance.widget.WidgetPinReceiver
 
+@Suppress("MagicNumber")
 private val ScreenBackground = Color(0xFFF0EEF5)
 
 @Composable
@@ -85,78 +86,22 @@ fun WatchlistScreen(viewModel: WatchlistViewModel = hiltViewModel()) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun WatchlistContent(
+internal fun WatchlistContent(
     lazyPagingItems: LazyPagingItems<Coin>,
     uiState: WatchlistUiState,
     onEvent: (WatchlistUiEvent) -> Unit,
     priceProvider: (String) -> Double?,
     formatPrice: (Double) -> String,
 ) {
-    val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    // Stable state holder — keeps WatchlistDialogs parameter count under the threshold.
+    val dialogState = remember { WatchlistDialogState() }
 
-    var showCreateFolderDialog by rememberSaveable { mutableStateOf(false) }
-    var folderToRename by remember { mutableStateOf<BookmarkFolder?>(null) }
-    var coinForFolder by rememberSaveable { mutableStateOf<String?>(null) }
-    var pendingCoinForNewFolder by rememberSaveable { mutableStateOf<String?>(null) }
-    var coinToRemove by remember { mutableStateOf<Pair<String, BookmarkFolder?>?>(null) }
-
-    // Dialogs & BottomSheets
-    coinToRemove?.let { (coinId, folder) ->
-        RemoveCoinDialog(
-            coinId = coinId,
-            folderName = folder?.name,
-            onConfirm = {
-                if (folder != null) {
-                    onEvent(WatchlistUiEvent.RemoveBookmarkFromFolder(folder.id, coinId))
-                }
-                coinToRemove = null
-            },
-            onDismiss = { coinToRemove = null }
-        )
-    }
-
-    if (showCreateFolderDialog) {
-        CreateFolderDialog(
-            onConfirm = { name ->
-                onEvent(WatchlistUiEvent.CreateFolder(name, pendingCoinForNewFolder))
-                pendingCoinForNewFolder = null
-                showCreateFolderDialog = false
-            },
-            onDismiss = {
-                pendingCoinForNewFolder = null
-                showCreateFolderDialog = false
-            },
-        )
-    }
-
-    folderToRename?.let { folder ->
-        RenameFolderDialog(
-            currentName = folder.name,
-            onConfirm = { newName ->
-                onEvent(WatchlistUiEvent.RenameFolder(folder.id, newName))
-                folderToRename = null
-            },
-            onDismiss = { folderToRename = null },
-        )
-    }
-
-    coinForFolder?.let { coinId ->
-        AddToFolderBottomSheet(
-            coinId = coinId,
-            folders = uiState.folders,
-            onAddToFolder = { folderId ->
-                onEvent(WatchlistUiEvent.AddBookmarkToFolder(folderId, coinId))
-                coinForFolder = null
-            },
-            onCreateFolder = {
-                pendingCoinForNewFolder = coinId
-                coinForFolder = null
-                showCreateFolderDialog = true
-            },
-            onDismiss = { coinForFolder = null },
-        )
-    }
+    WatchlistDialogs(
+        uiState = uiState,
+        onEvent = onEvent,
+        dialogState = dialogState,
+    )
 
     Scaffold(
         modifier = Modifier
@@ -165,11 +110,27 @@ private fun WatchlistContent(
         containerColor = ScreenBackground,
         topBar = {
             WatchlistTopBar(
-                onAddFolder = { showCreateFolderDialog = true },
-                scrollBehavior = scrollBehavior
+                onAddFolder = { dialogState.showCreateFolder = true },
+                scrollBehavior = scrollBehavior,
             )
         }
     ) { paddingValues ->
+        val context = LocalContext.current
+        // dialogState is a stable val — safe to capture inside remember.
+        val actions = remember(onEvent, priceProvider, formatPrice, context) {
+            WatchlistActions(
+                onEvent = onEvent,
+                priceProvider = priceProvider,
+                formatPrice = formatPrice,
+                onRenameFolder = { dialogState.folderToRename = it },
+                onAddToHomeScreen = { folderId -> requestPinWidget(context, folderId) },
+                onCoinForFolder = { dialogState.coinForFolder = it },
+                onRemoveCoinFromFolder = { coinId, folder ->
+                    dialogState.coinToRemove = coinId to folder
+                },
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -178,47 +139,94 @@ private fun WatchlistContent(
             if (!uiState.isNetworkAvailable) {
                 NetworkBanner()
             }
-
-            val context = LocalContext.current
-            val onAddToHomeScreen: (folderId: String) -> Unit = { folderId ->
-                val manager = AppWidgetManager.getInstance(context)
-                val provider = ComponentName(context, CryptoWidgetReceiver::class.java)
-                if (manager.isRequestPinAppWidgetSupported) {
-                    val callbackIntent = Intent(context, WidgetPinReceiver::class.java).apply {
-                        putExtra(WidgetPinReceiver.EXTRA_FOLDER_ID, folderId)
-                    }
-                    val successCallback = PendingIntent.getBroadcast(
-                        context,
-                        folderId.hashCode(),
-                        callbackIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-                    )
-                    manager.requestPinAppWidget(provider, null, successCallback)
-                }
-            }
-
             WatchlistMainContent(
                 lazyPagingItems = lazyPagingItems,
                 uiState = uiState,
-                listState = listState,
-                onEvent = onEvent,
-                priceProvider = priceProvider,
-                formatPrice = formatPrice,
-                onRenameFolder = { folderToRename = it },
-                onAddToHomeScreen = onAddToHomeScreen,
-                onCoinForFolder = { coinId ->
-                    val foldersWithCoin = uiState.folders.filter { it.coinIds.contains(coinId) }
-                    if (foldersWithCoin.size == 1) {
-                        coinToRemove = coinId to foldersWithCoin[0]
-                    } else {
-                        coinForFolder = coinId
-                    }
-                },
-                onRemoveCoinFromFolder = { coinId, folder ->
-                    coinToRemove = coinId to folder
-                }
+                actions = actions,
             )
         }
+    }
+}
+
+@Composable
+private fun WatchlistDialogs(
+    uiState: WatchlistUiState,
+    onEvent: (WatchlistUiEvent) -> Unit,
+    dialogState: WatchlistDialogState,
+) {
+    var pendingCoinForNewFolder by rememberSaveable { mutableStateOf<String?>(null) }
+
+    dialogState.coinToRemove?.let { (coinId, folder) ->
+        RemoveCoinDialog(
+            coinId = coinId,
+            folderName = folder?.name,
+            onConfirm = {
+                if (folder != null) {
+                    onEvent(WatchlistUiEvent.RemoveBookmarkFromFolder(folder.id, coinId))
+                }
+                dialogState.coinToRemove = null
+            },
+            onDismiss = { dialogState.coinToRemove = null },
+        )
+    }
+
+    if (dialogState.showCreateFolder) {
+        CreateFolderDialog(
+            onConfirm = { name ->
+                onEvent(WatchlistUiEvent.CreateFolder(name, pendingCoinForNewFolder))
+                pendingCoinForNewFolder = null
+                dialogState.showCreateFolder = false
+            },
+            onDismiss = {
+                pendingCoinForNewFolder = null
+                dialogState.showCreateFolder = false
+            },
+        )
+    }
+
+    dialogState.folderToRename?.let { folder ->
+        RenameFolderDialog(
+            currentName = folder.name,
+            onConfirm = { newName ->
+                onEvent(WatchlistUiEvent.RenameFolder(folder.id, newName))
+                dialogState.folderToRename = null
+            },
+            onDismiss = { dialogState.folderToRename = null },
+        )
+    }
+
+    dialogState.coinForFolder?.let { coinId ->
+        AddToFolderBottomSheet(
+            coinId = coinId,
+            folders = uiState.folders,
+            onAddToFolder = { folderId ->
+                onEvent(WatchlistUiEvent.AddBookmarkToFolder(folderId, coinId))
+                dialogState.coinForFolder = null
+            },
+            onCreateFolder = {
+                pendingCoinForNewFolder = coinId
+                dialogState.coinForFolder = null
+                dialogState.showCreateFolder = true
+            },
+            onDismiss = { dialogState.coinForFolder = null },
+        )
+    }
+}
+
+private fun requestPinWidget(context: Context, folderId: String) {
+    val manager = AppWidgetManager.getInstance(context)
+    val provider = ComponentName(context, CryptoWidgetReceiver::class.java)
+    if (manager.isRequestPinAppWidgetSupported) {
+        val callbackIntent = Intent(context, WidgetPinReceiver::class.java).apply {
+            putExtra(WidgetPinReceiver.EXTRA_FOLDER_ID, folderId)
+        }
+        val successCallback = PendingIntent.getBroadcast(
+            context,
+            folderId.hashCode(),
+            callbackIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        manager.requestPinAppWidget(provider, null, successCallback)
     }
 }
 
@@ -226,7 +234,7 @@ private fun WatchlistContent(
 @Composable
 private fun WatchlistTopBar(
     onAddFolder: () -> Unit,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
 ) {
     TopAppBar(
         title = {
@@ -248,7 +256,7 @@ private fun WatchlistTopBar(
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = ScreenBackground,
-            scrolledContainerColor = ScreenBackground
+            scrolledContainerColor = ScreenBackground,
         )
     )
 }
@@ -258,30 +266,22 @@ private fun WatchlistTopBar(
 private fun WatchlistMainContent(
     lazyPagingItems: LazyPagingItems<Coin>,
     uiState: WatchlistUiState,
-    listState: LazyListState,
-    onEvent: (WatchlistUiEvent) -> Unit,
-    priceProvider: (String) -> Double?,
-    formatPrice: (Double) -> String,
-    onRenameFolder: (BookmarkFolder) -> Unit,
-    onAddToHomeScreen: (folderId: String) -> Unit,
-    onCoinForFolder: (String) -> Unit,
-    onRemoveCoinFromFolder: (String, BookmarkFolder) -> Unit,
+    actions: WatchlistActions,
 ) {
+    val listState = rememberLazyListState()
     val isRefreshing = remember(lazyPagingItems.loadState.refresh, lazyPagingItems.itemCount) {
         lazyPagingItems.loadState.refresh is LoadState.Loading && lazyPagingItems.itemCount > 0
     }
 
     when (val refreshState = lazyPagingItems.loadState.refresh) {
         is LoadState.Loading -> {
-            if (lazyPagingItems.itemCount == 0) {
-                LoadingView()
-            }
+            if (lazyPagingItems.itemCount == 0) LoadingView()
         }
 
         is LoadState.Error -> {
             ErrorView(
                 error = refreshState.error,
-                onRetry = { lazyPagingItems.refresh() }
+                onRetry = { lazyPagingItems.refresh() },
             )
         }
 
@@ -295,13 +295,7 @@ private fun WatchlistMainContent(
                     lazyPagingItems = lazyPagingItems,
                     uiState = uiState,
                     listState = listState,
-                    onEvent = onEvent,
-                    priceProvider = priceProvider,
-                    formatPrice = formatPrice,
-                    onRenameFolder = onRenameFolder,
-                    onAddToHomeScreen = onAddToHomeScreen,
-                    onCoinForFolder = onCoinForFolder,
-                    onRemoveCoinFromFolder = onRemoveCoinFromFolder,
+                    actions = actions,
                 )
             }
         }
@@ -313,13 +307,7 @@ private fun WatchlistList(
     lazyPagingItems: LazyPagingItems<Coin>,
     uiState: WatchlistUiState,
     listState: LazyListState,
-    onEvent: (WatchlistUiEvent) -> Unit,
-    priceProvider: (String) -> Double?,
-    formatPrice: (Double) -> String,
-    onRenameFolder: (BookmarkFolder) -> Unit,
-    onAddToHomeScreen: (folderId: String) -> Unit,
-    onCoinForFolder: (String) -> Unit,
-    onRemoveCoinFromFolder: (String, BookmarkFolder) -> Unit,
+    actions: WatchlistActions,
 ) {
     LazyColumn(
         state = listState,
@@ -340,19 +328,19 @@ private fun WatchlistList(
             items(
                 items = uiState.folders,
                 key = { it.id },
-                contentType = { "folder" }
+                contentType = { "folder" },
             ) { folder ->
                 FolderItem(
                     modifier = Modifier.animateItem(),
                     folder = folder,
-                    onRename = { onRenameFolder(folder) },
-                    onDelete = { onEvent(WatchlistUiEvent.DeleteFolder(folder.id)) },
-                    onRemoveCoin = { coinId -> onRemoveCoinFromFolder(coinId, folder) },
-                    onAddToHomeScreen = { onAddToHomeScreen(folder.id) },
+                    onRename = { actions.onRenameFolder(folder) },
+                    onDelete = { actions.onEvent(WatchlistUiEvent.DeleteFolder(folder.id)) },
+                    onRemoveCoin = { coinId -> actions.onRemoveCoinFromFolder(coinId, folder) },
+                    onAddToHomeScreen = { actions.onAddToHomeScreen(folder.id) },
                     priceProvider = { symbol ->
-                        val price = priceProvider(symbol) ?: 0.0
-                        formatPrice(price)
-                    }
+                        val price = actions.priceProvider(symbol) ?: 0.0
+                        actions.formatPrice(price)
+                    },
                 )
             }
 
@@ -371,7 +359,7 @@ private fun WatchlistList(
         items(
             count = lazyPagingItems.itemCount,
             key = lazyPagingItems.itemKey { it.symbol },
-            contentType = lazyPagingItems.itemContentType { "coin" }
+            contentType = lazyPagingItems.itemContentType { "coin" },
         ) { index ->
             val coin = lazyPagingItems[index]
             coin?.let {
@@ -379,11 +367,11 @@ private fun WatchlistList(
                     modifier = Modifier.animateItem(),
                     coin = it,
                     priceProvider = {
-                        val price = priceProvider(it.symbol) ?: it.price
-                        formatPrice(price)
+                        val price = actions.priceProvider(it.symbol) ?: it.price
+                        actions.formatPrice(price)
                     },
                     isFoldered = it.symbol in uiState.coinIdsInFolders,
-                    onAddToFolder = { onCoinForFolder(it.symbol) },
+                    onAddToFolder = { actions.onCoinForFolder(it.symbol) },
                 )
             }
         }

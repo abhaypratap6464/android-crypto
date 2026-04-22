@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.abhay.crypto.R
 
+@Suppress("MagicNumber")
 private val TextSecondary = Color(0xFF757575)
 
 @Composable

@@ -1,5 +1,6 @@
 package com.abhay.crypto.data.repository
 
+import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -46,16 +47,18 @@ class CoinRepositoryImpl @Inject constructor(
 
     override suspend fun getCoinsByIds(ids: List<String>): List<Coin> =
         withContext(Dispatchers.IO) {
-            try {
-                val tickerPrices = api.getTickerPrices()
-                tickerPrices.filter { it.symbol in ids }.map { dto ->
-                    Coin(
-                        symbol = dto.symbol,
-                        baseAsset = dto.symbol.removeSuffix("USDT"),
-                        price = dto.price.toDoubleOrNull() ?: 0.0
-                    )
-                }
-            } catch (e: Exception) {
+            runCatching {
+                api.getTickerPrices()
+                    .filter { it.symbol in ids }
+                    .map { dto ->
+                        Coin(
+                            symbol = dto.symbol,
+                            baseAsset = dto.symbol.removeSuffix("USDT"),
+                            price = dto.price.toDoubleOrNull() ?: 0.0,
+                        )
+                    }
+            }.getOrElse { e ->
+                Log.e("CoinRepository", "Error fetching coins by ids", e)
                 emptyList()
             }
         }

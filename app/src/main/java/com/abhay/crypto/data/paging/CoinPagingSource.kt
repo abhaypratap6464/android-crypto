@@ -6,6 +6,8 @@ import com.abhay.crypto.data.mapper.CoinMapper
 import com.abhay.crypto.data.remote.BinanceApi
 import com.abhay.crypto.domain.model.Coin
 import kotlinx.coroutines.flow.MutableStateFlow
+import retrofit2.HttpException
+import java.io.IOException
 
 class CoinPagingSource(
     private val api: BinanceApi,
@@ -38,7 +40,9 @@ class CoinPagingSource(
                 prevKey = if (start == 0) null else (start - params.loadSize).coerceAtLeast(0),
                 nextKey = if (end == allCoins.size) null else end,
             )
-        } catch (e: Exception) {
+        } catch (e: IOException) {
+            LoadResult.Error(e)
+        } catch (e: HttpException) {
             LoadResult.Error(e)
         }
     }

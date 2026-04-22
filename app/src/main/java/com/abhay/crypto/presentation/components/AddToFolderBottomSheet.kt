@@ -14,7 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.abhay.crypto.domain.model.BookmarkFolder
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddToFolderBottomSheet(
@@ -41,6 +43,7 @@ fun AddToFolderBottomSheet(
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
+    val displayName = coinId.removeSuffix("USDT")
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -53,7 +56,7 @@ fun AddToFolderBottomSheet(
                 .padding(bottom = 16.dp),
         ) {
             Text(
-                text = "Add $coinId to folder",
+                text = "Add $displayName to folder",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
@@ -65,12 +68,14 @@ fun AddToFolderBottomSheet(
                 Text(
                     text = "No folders yet",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF757575),
+                    color = Color.Gray,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                 )
             } else {
                 LazyColumn {
                     items(folders, key = { it.id }) { folder ->
+                        val isInFolder = folder.coinIds.contains(coinId)
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -80,29 +85,38 @@ fun AddToFolderBottomSheet(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Folder,
+                                imageVector = if (isInFolder) Icons.Default.CheckCircle
+                                else Icons.Outlined.Folder,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = if (isInFolder) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp),
                             )
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = folder.name,
                                     style = MaterialTheme.typography.bodyLarge,
+                                    color = if (isInFolder) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurface,
                                 )
                                 Text(
-                                    text = "${folder.coinIds.size} coins",
+                                    text = if (isInFolder) "Added — tap to remove"
+                                    else "${folder.coinIds.size} coin${if (folder.coinIds.size == 1) "" else "s"}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF757575),
+                                    color = if (isInFolder) MaterialTheme.colorScheme.primary.copy(
+                                        alpha = 0.7f
+                                    )
+                                    else Color.Gray,
                                 )
                             }
                         }
+
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp))
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
-            HorizontalDivider()
 
             TextButton(
                 onClick = onCreateFolder,

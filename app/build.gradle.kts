@@ -4,6 +4,14 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.detekt)
+    jacoco
+}
+
+detekt {
+    toolVersion = libs.versions.detekt.get()
+    config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
+    buildUponDefaultConfig = true
 }
 
 android {
@@ -42,6 +50,68 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+}
+
+private val coverageExclusions = listOf(
+    "**/R.class",
+    "**/R$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    "**/*Test*.*",
+    "android/**/*.*",
+    "**/*\$ViewInjector*.*",
+    "**/*\$ViewBinder*.*",
+    "**/Lambda$*.class",
+    "**/Lambda.class",
+    "**/*Lambda.class",
+    "**/*Lambda*.class",
+    "**/*_LifecycleAdapter.*",
+    "**/androidx/databinding/*",
+    "**/di/**",
+    "**/*_Factory.*",
+    "**/*_MembersInjector.*",
+    "**/*_ProvideValueFactory.*",
+    "**/*_Module.*",
+    "**/*_Component.*",
+    "**/*_HiltModules*.*",
+    "**/*Hilt*.*",
+    "**/*Actions*.*",
+    "**/*Receiver*.*",
+    "**/*Widget*.*"
+)
+
+tasks.withType<Test> {
+    configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
+    }
+}
+
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports for Debug build"
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    val debugTree = fileTree("${project.layout.buildDirectory.get()}/tmp/kotlin-classes/debug") {
+        exclude(coverageExclusions)
+    }
+
+    val mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.setFrom(files(mainSrc))
+    classDirectories.setFrom(files(debugTree))
+    executionData.setFrom(fileTree(project.layout.buildDirectory.get()) {
+        include("jacoco/testDebugUnitTest.exec")
+    })
 }
 
 dependencies {
