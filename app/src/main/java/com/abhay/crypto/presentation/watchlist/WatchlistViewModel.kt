@@ -7,10 +7,8 @@ import androidx.paging.cachedIn
 import com.abhay.crypto.domain.model.Coin
 import com.abhay.crypto.domain.usecase.FormatPriceUseCase
 import com.abhay.crypto.domain.usecase.GetPagedCoinsUseCase
-import com.abhay.crypto.domain.usecase.GetWatchListedUseCase
 import com.abhay.crypto.domain.usecase.ObserveLivePricesUseCase
 import com.abhay.crypto.domain.usecase.ObserveNetworkUseCase
-import com.abhay.crypto.domain.usecase.ToggleWatchListUseCase
 import com.abhay.crypto.domain.usecase.folder.AddBookmarkToFolderUseCase
 import com.abhay.crypto.domain.usecase.folder.CreateFolderUseCase
 import com.abhay.crypto.domain.usecase.folder.DeleteFolderUseCase
@@ -34,9 +32,7 @@ class WatchlistViewModel @Inject constructor(
     observeLivePrices: ObserveLivePricesUseCase,
     observeNetwork: ObserveNetworkUseCase,
     getFolders: GetFoldersUseCase,
-    getWatchListed: GetWatchListedUseCase,
-    val formatPrice: FormatPriceUseCase,
-    private val toggleWatchList: ToggleWatchListUseCase,
+    private val formatPriceUseCase: FormatPriceUseCase,
     private val createFolder: CreateFolderUseCase,
     private val renameFolder: RenameFolderUseCase,
     private val deleteFolder: DeleteFolderUseCase,
@@ -55,12 +51,10 @@ class WatchlistViewModel @Inject constructor(
     val uiState: StateFlow<WatchlistUiState> = combine(
         observeNetwork(),
         getFolders(),
-        getWatchListed(),
-    ) { isNetworkAvailable, folders, watchListed ->
+    ) { isNetworkAvailable, folders ->
         WatchlistUiState(
             isNetworkAvailable = isNetworkAvailable,
             folders = folders,
-            watchListed = watchListed,
             coinIdsInFolders = folders.flatMapTo(mutableSetOf()) { it.coinIds },
         )
     }.stateIn(
@@ -69,12 +63,10 @@ class WatchlistViewModel @Inject constructor(
         initialValue = WatchlistUiState(),
     )
 
+    fun formatPrice(price: Double): String = formatPriceUseCase(price)
+
     fun onEvent(event: WatchlistUiEvent) {
         when (event) {
-            is WatchlistUiEvent.ToggleWatchList -> viewModelScope.launch {
-                toggleWatchList(event.symbol)
-            }
-
             is WatchlistUiEvent.CreateFolder -> viewModelScope.launch {
                 createFolder(event.name, event.coinId)
             }

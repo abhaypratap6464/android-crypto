@@ -9,16 +9,21 @@ import com.abhay.crypto.data.remote.BinanceApi
 import com.abhay.crypto.data.remote.BinanceWebSocketService
 import com.abhay.crypto.domain.model.Coin
 import com.abhay.crypto.domain.repository.CoinRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val PAGE_SIZE = 10
 private const val PREFETCH_DISTANCE = 2
+private const val WEBSOCKET_STOP_TIMEOUT_MS = 5_000L
 
 class CoinRepositoryImpl @Inject constructor(
     private val api: BinanceApi,
@@ -29,6 +34,17 @@ class CoinRepositoryImpl @Inject constructor(
     // has a price before the WebSocket sends its first tick.
     private val restPriceCache = MutableStateFlow<Map<String, Double>>(emptyMap())
 
+    // Shared so all subscribers (ViewModel + Glance widget) reuse the same WebSocket
+    // connection rather than each opening their own.
+    private val sharedLivePrices: Flow<Map<String, Double>> =
+        combine(restPriceCache, webSocketService.observePrices()) { rest, live ->
+            rest + live
+        }.shareIn(
+            scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+            started = SharingStarted.WhileSubscribed(WEBSOCKET_STOP_TIMEOUT_MS),
+            replay = 1,
+        )
+
     override fun getPagedCoins(): Flow<PagingData<Coin>> =
         Pager(
             config = PagingConfig(
@@ -36,14 +52,12 @@ class CoinRepositoryImpl @Inject constructor(
                 prefetchDistance = PREFETCH_DISTANCE,
                 enablePlaceholders = false,
             ),
-            pagingSourceFactory = { CoinPagingSource(api, restPriceCache) },
+            pagingSourceFactory = {
+                CoinPagingSource(api) { prices -> restPriceCache.value = prices }
+            },
         ).flow.flowOn(Dispatchers.IO)
 
-    override fun observeLivePrices(): Flow<Map<String, Double>> =
-        // REST prices are the baseline; WebSocket values override them as they arrive.
-        combine(restPriceCache, webSocketService.observePrices()) { rest, live ->
-            rest + live
-        }
+    override fun observeLivePrices(): Flow<Map<String, Double>> = sharedLivePrices
 
     override suspend fun getCoinsByIds(ids: List<String>): List<Coin> =
         withContext(Dispatchers.IO) {

@@ -1,5 +1,6 @@
 package com.abhay.crypto.di
 
+import com.abhay.crypto.BuildConfig
 import com.abhay.crypto.data.remote.BinanceApi
 import dagger.Module
 import dagger.Provides
@@ -19,6 +20,7 @@ import javax.inject.Singleton
 object NetworkModule {
 
     private const val BASE_URL = "https://api.binance.com/"
+    private const val TIMEOUT_SECONDS = 30L
 
     @Provides
     @Singleton
@@ -27,11 +29,15 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
-        .addInterceptor(
-            HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
-        )
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
+        .apply {
+            if (BuildConfig.DEBUG) {
+                addInterceptor(
+                    HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+                )
+            }
+        }
+        .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .build()
 
     @Provides

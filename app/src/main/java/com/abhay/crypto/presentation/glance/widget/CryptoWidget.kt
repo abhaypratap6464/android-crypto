@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
@@ -54,28 +53,23 @@ class CryptoWidget : GlanceAppWidget() {
             val prefs = currentState<Preferences>()
             val folderId = prefs[FOLDER_ID_KEY]
 
-            // Observe network status
             val isOnline by networkMonitor.isAvailable.collectAsState(initial = true)
 
-            // Collect folders safely
-            val foldersState =
-                remember { folderRepository.getFolders() }.collectAsState(initial = emptyList())
-            val folders = foldersState.value
+            // No remember{} — Glance re-creates composition on each update cycle so
+            // remember() does not persist state the way it does in Activity-hosted Compose.
+            val folders by folderRepository.getFolders().collectAsState(initial = emptyList())
             val folder = folders.find { it.id == folderId } ?: folders.firstOrNull()
 
-            // Observe live prices
-            val livePrices by remember { coinRepository.observeLivePrices() }.collectAsState(initial = emptyMap())
+            val livePrices by coinRepository.observeLivePrices()
+                .collectAsState(initial = emptyMap())
 
-            // Load coins for this folder
-            val coinsState = produceState<List<Coin>>(initialValue = emptyList(), key1 = folder) {
+            val coins by produceState<List<Coin>>(initialValue = emptyList(), key1 = folder) {
                 value = folder?.let { coinRepository.getCoinsByIds(it.coinIds) } ?: emptyList()
             }
 
-            val displayCoins = remember(coinsState.value, livePrices) {
-                coinsState.value.map { coin ->
-                    val livePrice = livePrices[coin.symbol]
-                    if (livePrice != null) coin.copy(price = livePrice) else coin
-                }
+            // Merge REST-fetched coins with latest WebSocket prices inline — no remember needed.
+            val displayCoins = coins.map { coin ->
+                coin.copy(price = livePrices[coin.symbol] ?: coin.price)
             }
 
             GlanceTheme {
@@ -83,7 +77,7 @@ class CryptoWidget : GlanceAppWidget() {
                     folderName = folder?.name ?: context.getString(R.string.watchlist),
                     coins = displayCoins,
                     isOnline = isOnline,
-                    formatPrice = { formatPriceUseCase(it) }
+                    formatPrice = { formatPriceUseCase(it) },
                 )
             }
         }

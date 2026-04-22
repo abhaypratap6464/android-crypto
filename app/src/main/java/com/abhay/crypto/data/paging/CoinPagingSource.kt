@@ -5,13 +5,14 @@ import androidx.paging.PagingState
 import com.abhay.crypto.data.mapper.CoinMapper
 import com.abhay.crypto.data.remote.BinanceApi
 import com.abhay.crypto.domain.model.Coin
-import kotlinx.coroutines.flow.MutableStateFlow
 import retrofit2.HttpException
 import java.io.IOException
 
 class CoinPagingSource(
     private val api: BinanceApi,
-    private val restPriceCache: MutableStateFlow<Map<String, Double>>,
+    // Callback instead of direct MutableStateFlow mutation — keeps the paging source
+    // decoupled from repository internals (single-responsibility).
+    private val onPricesCached: (Map<String, Double>) -> Unit,
 ) : PagingSource<Int, Coin>() {
 
     private var coins: List<Coin>? = null
@@ -30,7 +31,7 @@ class CoinPagingSource(
                 .map { CoinMapper.toDomain(it) }
                 .also { list ->
                     coins = list
-                    restPriceCache.value = list.associate { it.symbol to it.price }
+                    onPricesCached(list.associate { it.symbol to it.price })
                 }
 
             val start = params.key ?: 0

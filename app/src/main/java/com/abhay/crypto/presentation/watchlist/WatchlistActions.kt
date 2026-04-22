@@ -1,8 +1,12 @@
 package com.abhay.crypto.presentation.watchlist
 
+import androidx.compose.runtime.Stable
 import com.abhay.crypto.domain.model.BookmarkFolder
 
-data class WatchlistActions(
+// A plain stable class — data class is wrong here because lambda equals() is
+// always reference-based, so data class would never produce a stable cached instance.
+@Stable
+class WatchlistActions(
     val onEvent: (WatchlistUiEvent) -> Unit,
     val priceProvider: (String) -> Double?,
     val formatPrice: (Double) -> String,

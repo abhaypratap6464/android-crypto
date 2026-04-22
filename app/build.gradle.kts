@@ -27,13 +27,10 @@ android {
         testInstrumentationRunner = "com.abhay.crypto.HiltTestRunner"
     }
 
-    androidResources {
-        noCompress += "tflite"
-    }
-
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -49,6 +46,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {
@@ -151,9 +149,6 @@ dependencies {
 
     //  DataStore
     implementation(libs.datastore.preferences)
-
-    //  Image Loading
-    implementation(libs.coil.compose)
 
     //  Glance
     implementation(libs.glance.appwidget)
