@@ -4,6 +4,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.abhay.crypto.R
 
 @Composable
 fun RemoveCoinDialog(
@@ -14,23 +16,30 @@ fun RemoveCoinDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Remove Coin") },
+        title = { Text(stringResource(R.string.remove_coin)) },
         text = {
             val message = if (folderName != null) {
-                "Are you sure you want to remove ${coinId.removeSuffix("USDT")} from '$folderName'?"
+                stringResource(
+                    R.string.are_you_sure_you_want_to_remove_from,
+                    coinId.removeSuffix(stringResource(R.string.usdt)),
+                    folderName
+                )
             } else {
-                "Are you sure you want to remove ${coinId.removeSuffix("USDT")} from your watchlist?"
+                stringResource(
+                    R.string.are_you_sure_you_want_to_remove_from_your_watchlist,
+                    coinId.removeSuffix(stringResource(R.string.usdt))
+                )
             }
             Text(message)
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Remove")
+                Text(stringResource(R.string.remove))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         },
     )

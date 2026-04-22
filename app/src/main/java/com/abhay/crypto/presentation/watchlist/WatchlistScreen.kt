@@ -94,7 +94,7 @@ internal fun WatchlistContent(
     formatPrice: (Double) -> String,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    // Stable state holder — keeps WatchlistDialogs parameter count under the threshold.
+
     val dialogState = remember { WatchlistDialogState() }
 
     WatchlistDialogs(

@@ -32,8 +32,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.abhay.crypto.R
 import com.abhay.crypto.domain.model.BookmarkFolder
 
 @Suppress("MagicNumber")
@@ -74,7 +76,7 @@ fun FolderItem(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "${folder.coinIds.size} coins",
+                        text = stringResource(R.string.coins, folder.coinIds.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = SubtitleGray,
                     )
@@ -82,7 +84,7 @@ fun FolderItem(
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Folder options",
+                            contentDescription = stringResource(R.string.folder_options),
                         )
                     }
 
@@ -118,7 +120,7 @@ fun FolderItem(
                             },
                         )
                         DropdownMenuItem(
-                            text = { Text("Add to home screen") },
+                            text = { Text(stringResource(R.string.add_to_home_screen)) },
                             leadingIcon = {
                                 Icon(
                                     Icons.AutoMirrored.Filled.AddToHomeScreen,
@@ -166,7 +168,7 @@ private fun FolderCoinItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = symbol.removeSuffix("USDT"),
+            text = symbol.removeSuffix(stringResource(R.string.usdt)),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
@@ -183,7 +185,7 @@ private fun FolderCoinItem(
         ) {
             Icon(
                 imageVector = Icons.Default.Bookmark,
-                contentDescription = "Remove from folder",
+                contentDescription = stringResource(R.string.remove_from_folder),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp)
             )

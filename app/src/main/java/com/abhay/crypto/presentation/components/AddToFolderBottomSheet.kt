@@ -28,8 +28,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.abhay.crypto.R
 import com.abhay.crypto.domain.model.BookmarkFolder
 
 
@@ -56,7 +58,7 @@ fun AddToFolderBottomSheet(
                 .padding(bottom = 16.dp),
         ) {
             Text(
-                text = "Add $displayName to folder",
+                text = stringResource(R.string.add_to_folder, displayName),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
@@ -130,7 +132,7 @@ fun AddToFolderBottomSheet(
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.size(8.dp))
-                Text("Create new folder")
+                Text(stringResource(R.string.create_new_folder))
             }
         }
     }

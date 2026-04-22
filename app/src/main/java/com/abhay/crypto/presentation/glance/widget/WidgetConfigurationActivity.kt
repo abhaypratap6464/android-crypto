@@ -21,10 +21,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.abhay.crypto.R
 import com.abhay.crypto.domain.model.BookmarkFolder
 import com.abhay.crypto.domain.repository.FolderRepository
 import com.abhay.crypto.presentation.theme.CryptoTheme
@@ -62,7 +64,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
                     .collectAsStateWithLifecycle(initialValue = emptyList())
 
                 Scaffold(
-                    topBar = { TopAppBar(title = { Text("Choose a folder") }) }
+                    topBar = { TopAppBar(title = { Text(stringResource(R.string.choose_a_folder)) }) }
                 ) { padding ->
                     if (folders.isEmpty()) {
                         Box(
@@ -71,7 +73,7 @@ class WidgetConfigurationActivity : ComponentActivity() {
                                 .padding(padding),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text("No folders yet — create one in the app first.")
+                            Text(stringResource(R.string.no_folders_yet_create_one_in_the_app_first))
                         }
                     } else {
                         LazyColumn(contentPadding = padding) {
