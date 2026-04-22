@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">crypto</string>
+
+    <!-- Watchlist Screen -->
+    <string name="all_coins">All Coins</string>
+    <string name="failed_to_load_coins">Failed to load coins</string>
+    <string name="my_folders">My Folders</string>
+    <string name="network_error_message">Check your network settings and try again</string>
+    <string name="new_folder">New folder</string>
+    <string name="no_internet">No internet connection</string>
+    <string name="try_again">Try again</string>
+    <string name="watchlist">Watchlist</string>
 </resources>

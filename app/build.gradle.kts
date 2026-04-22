@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     //  Navigation 3
@@ -67,6 +68,19 @@ dependencies {
     //  Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    //  Networking
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.kotlinx.serialization.json)
+
+    //  Paging
+    implementation(libs.paging.compose)
+
+    //  DataStore
+    implementation(libs.datastore.preferences)
 
     //  Image Loading
     implementation(libs.coil.compose)

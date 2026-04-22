@@ -20,11 +20,19 @@ hiltNavigationCompose = "1.3.0"
 #Hilt
 hilt = "2.59.2"
 
+#Networking
+retrofit = "2.11.0"
+okhttp = "4.12.0"
+kotlinxSerializationJson = "1.8.1"
+
+#Paging
+paging = "3.3.6"
+
+#DataStore
+datastore = "1.1.4"
+
 #Image loading
 coil = "2.7.0"
-
-#LiteRT (TensorFlow Lite Runtime)
-litert = "2.1.4"
 
 #Testing
 junit = "4.13.2"
@@ -51,6 +59,7 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
 #Navigation 3
 navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
@@ -61,6 +70,19 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 #Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+
+#Networking
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-kotlinx = { group = "com.squareup.retrofit2", name = "converter-kotlinx-serialization", version.ref = "retrofit" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+
+#Paging
+paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+
+#DataStore
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 #Image loading
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
