@@ -5,6 +5,16 @@ coins into custom folders, and surfaces any folder as a home screen Glance widge
 
 ---
 
+---
+
+## Screenshots
+
+| Home                                                 | Add folder                                          | Bookmark-Crypto                                          | Screen-Widget                                   |
+|------------------------------------------------------|-----------------------------------------------------|----------------------------------------------------------|-------------------------------------------------|
+| <img src="screenshots/home-screen.png" width="200"/> | <img src="screenshots/add-folder.png" width="200"/> | <img src="screenshots/bookmark-crypto.png" width="200"/> | <img src="screenshots/widget.png" width="200"/> |
+
+---
+
 ## Architecture — Clean Architecture layers
 
 ```
