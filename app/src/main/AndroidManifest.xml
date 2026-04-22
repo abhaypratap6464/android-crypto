@@ -25,6 +25,32 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".presentation.glance.widget.CryptoWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/crypto_widget_info" />
+        </receiver>
+
+        <!-- Launched by Android when user adds the widget from the home screen picker -->
+        <activity
+            android:name=".presentation.glance.widget.WidgetConfigurationActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Crypto">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Receives the success callback from requestPinAppWidget (in-app pin flow) -->
+        <receiver
+            android:name=".presentation.glance.widget.WidgetPinReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

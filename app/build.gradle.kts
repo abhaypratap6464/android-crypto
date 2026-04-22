@@ -85,6 +85,10 @@ dependencies {
     //  Image Loading
     implementation(libs.coil.compose)
 
+    //  Glance
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
+
     //  Unit Tests
     testImplementation(libs.junit)
     testImplementation(libs.test.mockk)

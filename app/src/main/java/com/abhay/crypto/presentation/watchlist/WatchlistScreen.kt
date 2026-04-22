@@ -1,5 +1,9 @@
 package com.abhay.crypto.presentation.watchlist
 
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,6 +63,8 @@ import com.abhay.crypto.presentation.components.LoadingView
 import com.abhay.crypto.presentation.components.NetworkBanner
 import com.abhay.crypto.presentation.components.RemoveCoinDialog
 import com.abhay.crypto.presentation.components.RenameFolderDialog
+import com.abhay.crypto.presentation.glance.widget.CryptoWidgetReceiver
+import com.abhay.crypto.presentation.glance.widget.WidgetPinReceiver
 
 private val ScreenBackground = Color(0xFFF0EEF5)
 
@@ -172,6 +179,24 @@ private fun WatchlistContent(
                 NetworkBanner()
             }
 
+            val context = LocalContext.current
+            val onAddToHomeScreen: (folderId: String) -> Unit = { folderId ->
+                val manager = AppWidgetManager.getInstance(context)
+                val provider = ComponentName(context, CryptoWidgetReceiver::class.java)
+                if (manager.isRequestPinAppWidgetSupported) {
+                    val callbackIntent = Intent(context, WidgetPinReceiver::class.java).apply {
+                        putExtra(WidgetPinReceiver.EXTRA_FOLDER_ID, folderId)
+                    }
+                    val successCallback = PendingIntent.getBroadcast(
+                        context,
+                        folderId.hashCode(),
+                        callbackIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
+                    manager.requestPinAppWidget(provider, null, successCallback)
+                }
+            }
+
             WatchlistMainContent(
                 lazyPagingItems = lazyPagingItems,
                 uiState = uiState,
@@ -180,6 +205,7 @@ private fun WatchlistContent(
                 priceProvider = priceProvider,
                 formatPrice = formatPrice,
                 onRenameFolder = { folderToRename = it },
+                onAddToHomeScreen = onAddToHomeScreen,
                 onCoinForFolder = { coinId ->
                     val foldersWithCoin = uiState.folders.filter { it.coinIds.contains(coinId) }
                     if (foldersWithCoin.size == 1) {
@@ -237,6 +263,7 @@ private fun WatchlistMainContent(
     priceProvider: (String) -> Double?,
     formatPrice: (Double) -> String,
     onRenameFolder: (BookmarkFolder) -> Unit,
+    onAddToHomeScreen: (folderId: String) -> Unit,
     onCoinForFolder: (String) -> Unit,
     onRemoveCoinFromFolder: (String, BookmarkFolder) -> Unit,
 ) {
@@ -272,8 +299,9 @@ private fun WatchlistMainContent(
                     priceProvider = priceProvider,
                     formatPrice = formatPrice,
                     onRenameFolder = onRenameFolder,
+                    onAddToHomeScreen = onAddToHomeScreen,
                     onCoinForFolder = onCoinForFolder,
-                    onRemoveCoinFromFolder = onRemoveCoinFromFolder
+                    onRemoveCoinFromFolder = onRemoveCoinFromFolder,
                 )
             }
         }
@@ -289,6 +317,7 @@ private fun WatchlistList(
     priceProvider: (String) -> Double?,
     formatPrice: (Double) -> String,
     onRenameFolder: (BookmarkFolder) -> Unit,
+    onAddToHomeScreen: (folderId: String) -> Unit,
     onCoinForFolder: (String) -> Unit,
     onRemoveCoinFromFolder: (String, BookmarkFolder) -> Unit,
 ) {
@@ -318,9 +347,8 @@ private fun WatchlistList(
                     folder = folder,
                     onRename = { onRenameFolder(folder) },
                     onDelete = { onEvent(WatchlistUiEvent.DeleteFolder(folder.id)) },
-                    onRemoveCoin = { coinId ->
-                        onRemoveCoinFromFolder(coinId, folder)
-                    },
+                    onRemoveCoin = { coinId -> onRemoveCoinFromFolder(coinId, folder) },
+                    onAddToHomeScreen = { onAddToHomeScreen(folder.id) },
                     priceProvider = { symbol ->
                         val price = priceProvider(symbol) ?: 0.0
                         formatPrice(price)

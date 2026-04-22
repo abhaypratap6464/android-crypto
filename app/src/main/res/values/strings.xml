@@ -10,4 +10,8 @@
     <string name="no_internet">No internet connection</string>
     <string name="try_again">Try again</string>
     <string name="watchlist">Watchlist</string>
+    <string name="offline_status">Offline</string>
+    <string name="no_bookmarks_yet">No bookmarks yet</string>
+    <string name="loading_dots">…</string>
+    <string name="refresh_desc">Refresh price</string>
 </resources>

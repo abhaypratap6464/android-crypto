@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddToHomeScreen
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
@@ -43,6 +44,7 @@ fun FolderItem(
     onRename: () -> Unit,
     onDelete: () -> Unit,
     onRemoveCoin: (coinId: String) -> Unit,
+    onAddToHomeScreen: () -> Unit,
     priceProvider: (String) -> String,
     modifier: Modifier = Modifier,
 ) {
@@ -109,6 +111,16 @@ fun FolderItem(
                             onClick = {
                                 menuExpanded = false
                                 onDelete()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Add to home screen") },
+                            leadingIcon = {
+                                Icon(Icons.Default.AddToHomeScreen, contentDescription = null)
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                onAddToHomeScreen()
                             },
                         )
                     }

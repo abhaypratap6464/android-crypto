@@ -1,4 +1,4 @@
-package com.abhay.crypto.navigation
+package com.abhay.crypto.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val PAGE_SIZE = 10
@@ -41,5 +42,21 @@ class CoinRepositoryImpl @Inject constructor(
         // REST prices are the baseline; WebSocket values override them as they arrive.
         combine(restPriceCache, webSocketService.observePrices()) { rest, live ->
             rest + live
+        }
+
+    override suspend fun getCoinsByIds(ids: List<String>): List<Coin> =
+        withContext(Dispatchers.IO) {
+            try {
+                val tickerPrices = api.getTickerPrices()
+                tickerPrices.filter { it.symbol in ids }.map { dto ->
+                    Coin(
+                        symbol = dto.symbol,
+                        baseAsset = dto.symbol.removeSuffix("USDT"),
+                        price = dto.price.toDoubleOrNull() ?: 0.0
+                    )
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
         }
 }
