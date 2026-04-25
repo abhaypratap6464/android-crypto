@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -24,3 +25,12 @@ dependencyResolutionManagement {
 
 rootProject.name = "crypto"
 include(":app")
+include(":core:domain")
+include(":core:network")
+include(":core:data")
+include(":core:ui")
+include(":core:testing")
+include(":feature:watchlist:api")
+include(":feature:watchlist:impl")
+include(":feature:widget:api")
+include(":feature:widget:impl")

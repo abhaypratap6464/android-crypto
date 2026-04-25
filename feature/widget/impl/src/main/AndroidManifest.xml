@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <receiver
+            android:name="com.abhay.crypto.feature.widget.impl.CryptoWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/crypto_widget_info" />
+        </receiver>
+
+        <activity
+            android:name="com.abhay.crypto.feature.widget.impl.WidgetConfigurationActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Crypto">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name="com.abhay.crypto.feature.widget.impl.WidgetPinReceiver"
+            android:exported="false" />
+    </application>
+
+</manifest>
