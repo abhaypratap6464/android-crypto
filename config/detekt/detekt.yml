@@ -94,13 +94,13 @@ comments:
 complexity:
   active: true
   CognitiveComplexMethod:
-    active: false
+    active: true
     threshold: 15
   ComplexCondition:
     active: true
     threshold: 4
   ComplexInterface:
-    active: false
+    active: true
     threshold: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
@@ -621,7 +621,7 @@ style:
     maxJumpCount: 1
   MagicNumber:
     active: true
-    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/theme/**', '**/di/**' ]
+    excludes: [ '**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**', '**/*.kts', '**/Color.kt', '**/Dimens.kt', '**/Constants.kt', '**/di/**' ]
     ignoreNumbers:
       - '-1'
       - '0'
@@ -638,7 +638,7 @@ style:
     ignoreRanges: false
     ignoreExtensionFunctions: true
   MandatoryBracesLoops:
-    active: false
+    active: true
   MaxChainedCallsOnSameLine:
     active: false
     maxChainedCalls: 5
@@ -798,3 +798,5 @@ style:
       - 'androidx.compose.ui.graphics.*'
       - 'androidx.glance.layout.*'
       - 'androidx.glance.*'
+      - 'androidx.navigation3.runtime.*'
+      - 'com.abhay.crypto.core.ui.theme.*'

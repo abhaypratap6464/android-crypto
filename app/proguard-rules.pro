@@ -16,19 +16,9 @@
 }
 
 # ── Domain models (serialized to/from DataStore JSON) ─────────────────────
--keep class com.abhay.crypto.domain.model.** { *; }
-
-# ── Retrofit + OkHttp ─────────────────────────────────────────────────────
--dontwarn okhttp3.**
--dontwarn okio.**
--keep class retrofit2.** { *; }
--keepattributes Signature, Exceptions
+-keep class com.abhay.crypto.core.domain.model.** { *; }
 
 # ── Hilt / Dagger ─────────────────────────────────────────────────────────
 -dontwarn com.google.dagger.**
 -keep class dagger.hilt.** { *; }
 -keep @dagger.hilt.android.lifecycle.HiltViewModel class * { *; }
-
-# ── Glance widget ─────────────────────────────────────────────────────────
--keep class androidx.glance.** { *; }
--keep class com.abhay.crypto.presentation.glance.** { *; }

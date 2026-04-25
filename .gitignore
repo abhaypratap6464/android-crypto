@@ -1,45 +1,34 @@
-# Built outputs
-/build
-app/build
+# Gradle
+.gradle/
+build/
 **/build/
-
-# Local configuration
-local.properties
-*.local.properties
+gradle-app.setting
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
 
 # Android Studio / IntelliJ IDEA
 .idea/
 *.iml
 *.iws
 *.ipr
-.DS_Store
+out/
+captures/
+.externalNativeBuild/
+.cxx/
 
-# Gradle
-.gradle/
-gradle/wrapper/gradle-wrapper.jar
-gradle-app.setting
-!gradle/wrapper/gradle-wrapper.properties
+# Local configuration
+local.properties
+*.local.properties
+secrets.properties
 
 # Keystore / signing
 *.jks
 *.keystore
 keystore.properties
 
-# ProGuard
+# ProGuard / R8
 proguard/
 *.pro.bak
-
-# Navigation safe args generated
-app/src/main/java/**/*Directions.kt
-app/src/main/java/**/*Args.kt
-
-# Hilt generated
-app/src/main/java/**/*_HiltComponents.java
-app/src/main/java/**/*_MembersInjector.java
-
-# KSP / KAPT generated
-app/build/generated/
-**/generated/
 
 # OS files
 .DS_Store
@@ -48,20 +37,27 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Secrets / API keys
-secrets.properties
-google-services.json
-
-# Captures
-captures/
-
-# Test results
+# Test results / Reports
 test-results/
+**/test-results/
 lint-results*
+**/lint-results*
 *.lint.xml
+**/build/reports/
+**/build/test-results/
 
 # Backup files
 *.bak
 *.swp
 *.orig
 *~
+
+# Secrets / API keys
+google-services.json
+
+# Detekt
+**/build/reports/detekt/
+
+# AI / Context
+memory/
+CLAUDE.md
