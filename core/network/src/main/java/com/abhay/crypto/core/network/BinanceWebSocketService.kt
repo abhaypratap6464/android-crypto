@@ -3,5 +3,9 @@ package com.abhay.crypto.core.network
 import kotlinx.coroutines.flow.Flow
 
 interface BinanceWebSocketService {
-    fun observePrices(): Flow<Map<String, Double>>
+    /**
+     * Observes real-time prices for the given [symbols].
+     * Subscribes/Unsubscribes dynamically as the [symbols] flow changes.
+     */
+    fun observePrices(symbols: Flow<Set<String>>): Flow<Map<String, Double>>
 }

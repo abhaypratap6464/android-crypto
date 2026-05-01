@@ -5,12 +5,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeBinanceWebSocketService : BinanceWebSocketService {
-
-    private val tickerFlow = MutableStateFlow<Map<String, Double>>(emptyMap())
-
-    override fun observePrices(): Flow<Map<String, Double>> = tickerFlow
-
-    suspend fun emitPrices(prices: Map<String, Double>) {
-        tickerFlow.emit(prices)
+    private val _prices = MutableStateFlow<Map<String, Double>>(emptyMap())
+    fun setPrices(prices: Map<String, Double>) {
+        _prices.value = prices
     }
+
+    override fun observePrices(symbols: Flow<Set<String>>): Flow<Map<String, Double>> = _prices
 }

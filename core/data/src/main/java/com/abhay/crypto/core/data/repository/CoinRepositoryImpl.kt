@@ -13,35 +13,42 @@ import com.abhay.crypto.core.network.BinanceApi
 import com.abhay.crypto.core.network.BinanceWebSocketService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class CoinRepositoryImpl @Inject constructor(
     private val api: BinanceApi,
-    webSocketService: BinanceWebSocketService,
+    private val webSocketService: BinanceWebSocketService,
     @param:ApplicationScope private val externalScope: CoroutineScope,
 ) : CoinRepository {
 
-    // Populated by CoinPagingSource on first load. Acts as a fallback so every coin
-    // has a price before the WebSocket sends its first tick.
+    // Populated by CoinPagingSource on first load. Acts as a fallback.
     private val restPriceCache = MutableStateFlow<Map<String, Double>>(emptyMap())
 
-    // Shared so all subscribers (ViewModel + Glance widget) reuse the same WebSocket
-    // connection rather than each opening their own.
+    private val activeSymbols = MutableStateFlow<Set<String>>(emptySet())
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val webSocketPrices: Flow<Map<String, Double>> =
+        webSocketService.observePrices(activeSymbols)
+            .shareIn(
+                scope = externalScope,
+                started = SharingStarted.WhileSubscribed(Constants.WEBSOCKET_STOP_TIMEOUT_MS),
+                replay = 1,
+            )
+
     private val sharedLivePrices: Flow<Map<String, Double>> =
-        combine(restPriceCache, webSocketService.observePrices()) { rest, live ->
-            rest + live
-        }.shareIn(
-            scope = externalScope,
-            started = SharingStarted.WhileSubscribed(Constants.WEBSOCKET_STOP_TIMEOUT_MS),
-            replay = 1,
-        )
+        combine(restPriceCache, webSocketPrices) { rest, live -> rest + live }
 
     override fun getPagedCoins(): Flow<PagingData<Coin>> =
         Pager(
@@ -55,7 +62,9 @@ class CoinRepositoryImpl @Inject constructor(
             }
         ).flow.flowOn(Dispatchers.IO)
 
-    override fun observeLivePrices(): Flow<Map<String, Double>> = sharedLivePrices
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun observeLivePrices(symbols: Flow<Set<String>>): Flow<Map<String, Double>> =
+        symbols.onEach { activeSymbols.value = it }.flatMapLatest { sharedLivePrices }
 
     override suspend fun getCoinsByIds(ids: List<String>): List<Coin> =
         withContext(Dispatchers.IO) {

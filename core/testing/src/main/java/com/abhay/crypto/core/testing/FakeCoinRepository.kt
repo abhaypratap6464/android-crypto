@@ -5,26 +5,23 @@ import com.abhay.crypto.core.domain.model.Coin
 import com.abhay.crypto.core.domain.repository.CoinRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 
 class FakeCoinRepository : CoinRepository {
+    private val pagedCoins = MutableStateFlow<PagingData<Coin>>(PagingData.empty())
+    private val livePrices = MutableStateFlow<Map<String, Double>>(emptyMap())
 
-    private val livePricesFlow = MutableStateFlow<Map<String, Double>>(emptyMap())
-    private var coins = listOf<Coin>()
-
-    override fun getPagedCoins(): Flow<PagingData<Coin>> = flowOf(PagingData.from(coins))
-
-    override fun observeLivePrices(): Flow<Map<String, Double>> = livePricesFlow
-
-    override suspend fun getCoinsByIds(ids: List<String>): List<Coin> {
-        return coins.filter { it.symbol in ids }
-    }
-
-    fun setCoins(coins: List<Coin>) {
-        this.coins = coins
+    fun setPagedCoins(data: PagingData<Coin>) {
+        pagedCoins.value = data
     }
 
     fun setLivePrices(prices: Map<String, Double>) {
-        livePricesFlow.value = prices
+        livePrices.value = prices
     }
+
+    override fun getPagedCoins(): Flow<PagingData<Coin>> = pagedCoins
+
+    override fun observeLivePrices(symbols: Flow<Set<String>>): Flow<Map<String, Double>> =
+        livePrices
+
+    override suspend fun getCoinsByIds(ids: List<String>): List<Coin> = emptyList()
 }

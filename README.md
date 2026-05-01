@@ -159,9 +159,9 @@ All shared Gradle configuration lives in `:build-logic:convention`. Each module'
 
 | Category        | Library                                  | Version     |
 |-----------------|------------------------------------------|-------------|
-| Language        | Kotlin                                   | 2.3.20      |
+| Language        | Kotlin                                   | 2.3.21      |
 | Build           | Android Gradle Plugin                    | 9.1.1       |
-| Build           | KSP                                      | 2.3.6       |
+| Build           | KSP                                      | 2.3.7       |
 | UI              | Compose BOM                              | 2026.03.01  |
 | UI              | Material 3                               | BOM-managed |
 | Navigation      | Navigation 3                             | 1.1.0       |

@@ -7,5 +7,6 @@ import javax.inject.Inject
 class ObserveLivePricesUseCase @Inject constructor(
     private val repository: CoinRepository,
 ) {
-    operator fun invoke(): Flow<Map<String, Double>> = repository.observeLivePrices()
+    operator fun invoke(symbols: Flow<Set<String>>): Flow<Map<String, Double>> =
+        repository.observeLivePrices(symbols)
 }
