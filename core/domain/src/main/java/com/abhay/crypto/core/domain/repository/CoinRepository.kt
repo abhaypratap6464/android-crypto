@@ -6,6 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface CoinRepository {
     fun getPagedCoins(): Flow<PagingData<Coin>>
-    fun observeLivePrices(): Flow<Map<String, Double>>
+    fun observeLivePrices(symbols: Flow<Set<String>>): Flow<Map<String, Double>>
     suspend fun getCoinsByIds(ids: List<String>): List<Coin>
 }

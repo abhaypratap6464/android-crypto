@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -41,54 +42,46 @@ class WatchlistViewModel @Inject constructor(
 
     val pagedCoins: Flow<PagingData<Coin>> = getPagedCoins().cachedIn(viewModelScope)
 
-    val livePrices: StateFlow<Map<String, Double>> = observeLivePrices().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(Constants.SUBSCRIPTION_TIMEOUT_MS),
-        initialValue = emptyMap(),
-    )
-
     val uiState: StateFlow<WatchlistUiState> = combine(
-        observeNetwork(),
         getFolders(),
-    ) { isNetworkAvailable, folders ->
+        observeNetwork()
+    ) { folders, isNetworkAvailable ->
         WatchlistUiState(
-            isNetworkAvailable = isNetworkAvailable,
             folders = folders,
-            coinIdsInFolders = folders.flatMapTo(mutableSetOf()) { it.coinIds },
+            isNetworkAvailable = isNetworkAvailable,
+            coinIdsInFolders = folders.flatMap { it.coinIds }.toSet()
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(Constants.SUBSCRIPTION_TIMEOUT_MS),
-        initialValue = WatchlistUiState(),
+        initialValue = WatchlistUiState()
     )
+
+    val livePrices: StateFlow<Map<String, Double>> =
+        observeLivePrices(uiState.map { it.coinIdsInFolders })
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(Constants.SUBSCRIPTION_TIMEOUT_MS),
+                initialValue = emptyMap()
+            )
 
     fun formatPrice(price: Double): String = formatPriceUseCase(price)
 
     fun onEvent(event: WatchlistUiEvent) {
-        when (event) {
-            is WatchlistUiEvent.CreateFolder -> viewModelScope.launch {
-                createFolder(event.name, event.coinId)
-            }
+        viewModelScope.launch {
+            when (event) {
+                is WatchlistUiEvent.CreateFolder -> createFolder(event.name, event.coinId)
+                is WatchlistUiEvent.RenameFolder -> renameFolder(event.folderId, event.newName)
+                is WatchlistUiEvent.DeleteFolder -> deleteFolder(event.folderId)
+                is WatchlistUiEvent.AddBookmarkToFolder -> addBookmarkToFolder(
+                    event.folderId,
+                    event.coinId
+                )
 
-            is WatchlistUiEvent.RenameFolder -> viewModelScope.launch {
-                renameFolder(event.folderId, event.newName)
-            }
-
-            is WatchlistUiEvent.DeleteFolder -> viewModelScope.launch {
-                deleteFolder(event.folderId)
-            }
-
-            is WatchlistUiEvent.AddBookmarkToFolder -> viewModelScope.launch {
-                val folder = uiState.value.folders.find { it.id == event.folderId }
-                if (folder?.coinIds?.contains(event.coinId) == true) {
-                    removeBookmarkFromFolder(event.folderId, event.coinId)
-                } else {
-                    addBookmarkToFolder(event.folderId, event.coinId)
-                }
-            }
-
-            is WatchlistUiEvent.RemoveBookmarkFromFolder -> viewModelScope.launch {
-                removeBookmarkFromFolder(event.folderId, event.coinId)
+                is WatchlistUiEvent.RemoveBookmarkFromFolder -> removeBookmarkFromFolder(
+                    event.folderId,
+                    event.coinId
+                )
             }
         }
     }

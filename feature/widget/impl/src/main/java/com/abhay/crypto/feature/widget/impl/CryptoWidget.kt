@@ -22,6 +22,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.EntryPoints
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class CryptoWidget : GlanceAppWidget() {
 
@@ -59,7 +60,8 @@ class CryptoWidget : GlanceAppWidget() {
             val folders by folderRepository.getFolders().collectAsState(initial = emptyList())
             val folder = folders.find { it.id == folderId } ?: folders.firstOrNull()
 
-            val livePrices by coinRepository.observeLivePrices()
+            val symbols = folder?.coinIds?.toSet() ?: emptySet()
+            val livePrices by coinRepository.observeLivePrices(MutableStateFlow(symbols))
                 .collectAsState(initial = emptyMap())
 
             val coins by produceState(initialValue = emptyList(), key1 = folder) {

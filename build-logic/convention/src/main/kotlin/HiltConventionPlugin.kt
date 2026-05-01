@@ -11,6 +11,15 @@ class HiltConventionPlugin : Plugin<Project> {
             dependencies {
                 "ksp"(libs.findLibrary("hilt-compiler").get())
             }
+
+            // For non-Android modules (like :core:domain)
+            pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
+                dependencies {
+                    "implementation"(libs.findLibrary("hilt-core").get())
+                }
+            }
+
+            // For Android modules
             pluginManager.withPlugin("com.android.base") {
                 apply(plugin = "com.google.dagger.hilt.android")
                 dependencies {
